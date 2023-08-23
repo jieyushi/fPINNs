@@ -166,8 +166,8 @@ for epoch in range(iterations):
 
 
     #minmse=np.min([mse_f_1.data,mse_u_2.data,mse_u_4.data,mse_u_3.data,mse_u_5.data])
-    #minmse=np.min([mse_f_1.data,mse_u_2.data,mse_u_4.data,mse_u_3.data])
-    minmse=1
+    minmse=np.min([mse_f_1.data,mse_u_2.data,mse_u_4.data,mse_u_3.data])
+    #minmse=1
     w1=mse_f_1/minmse
     w2 = mse_u_2 / minmse
     w3 = mse_u_3 / minmse
