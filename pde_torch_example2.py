@@ -50,7 +50,7 @@ class Net(nn.Module):
         out = torch.mul(self.hidden_layer7(out), torch.tanh(self.hidden_layer7(out)))
         out = torch.mul(self.hidden_layer8(out), torch.tanh(self.hidden_layer8(out)))
         out_NN = self.output_layer(out)
-        xs=torch.mul(x[:, 0],torch.sin(np.pi*x[:, 1]))
+        xs=torch.mul(x[:, 0]**alpha,torch.sin(np.pi*x[:, 1]))
         out_final = torch.mul(xs,out_NN[:,0])
         size_out=out_final.shape[0]
         out_final=out_final.reshape(size_out,1)
