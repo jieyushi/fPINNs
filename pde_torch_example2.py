@@ -104,7 +104,7 @@ optimizer = torch.optim.Adam(net.parameters(), lr=1e-3)
 # 初始化 常量
 
 M=20
-N=40
+N=20
 alpha=0.6
 
 t = np.linspace(0.00001, 1, N+1)
