@@ -14,14 +14,12 @@ from scipy.special import gamma
 
 # 模型搭建
 class Net(nn.Module):
-    def __init__(self, NN): # NL n个l（线性，全连接）隐藏层， NN 输入数据的维数， 128 256
-        # NL是有多少层隐藏层
-        # NN是每层的神经元数量
+    def __init__(self, NN): 
         super(Net, self).__init__()
 
         self.input_layer = nn.Linear(2, NN)
-        self.hidden_layer1 = nn.Linear(NN,int(NN)) ## 原文这里用NN，我这里用的下采样，经过实验验证，“等采样”更优
-        self.hidden_layer2 = nn.Linear(int(NN), int(NN))  ## 原文这里用NN，我这里用的下采样，经过实验验证，“等采样”更优
+        self.hidden_layer1 = nn.Linear(NN,int(NN)) 
+        self.hidden_layer2 = nn.Linear(int(NN), int(NN))  
         self.hidden_layer3 = nn.Linear(int(NN), int(NN))
         self.hidden_layer4 = nn.Linear(int(NN), int(NN))
         self.hidden_layer5 = nn.Linear(int(NN), int(NN))
@@ -51,7 +49,7 @@ class Net(nn.Module):
         out = torch.mul(self.hidden_layer7(out), torch.tanh(self.hidden_layer7(out)))
         out = torch.mul(self.hidden_layer8(out), torch.tanh(self.hidden_layer8(out)))
         out_NN = self.output_layer(out)
-        xs=torch.mul(x[:, 0],torch.sin(np.pi*x[:, 1]))
+        xs=torch.mul(x[:, 0]**alpha,torch.sin(np.pi*x[:, 1]))
         # xs=torch.mul(x[:, 0]**alpha,torch.mul(x[:, 1],1-x[:, 1]))
         out_final = torch.mul(xs,out_NN[:,0])
         size_out=out_final.shape[0]
@@ -171,7 +169,7 @@ for epoch in range(iterations):
 test_M=100
 test_N=100
 x0 = np.linspace(0, 1, test_M)
-t0 = np.linspace(0.01, 1, test_N)
+t0 = np.linspace(0, 1, test_N)
 #u_real=t**3*(1-x)*np.sin(x)
 
 ms_t, ms_x = np.meshgrid(t0, x0)
