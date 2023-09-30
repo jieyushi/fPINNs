@@ -126,7 +126,7 @@ pt_f_collocation1 = Variable(torch.from_numpy(f).float(), requires_grad=True)
 pt_u_collocation1 = Variable(torch.from_numpy(Exact1).float(), requires_grad=True)
 
 
-iterations = 20000
+iterations = 10000
 for epoch in range(iterations):
     optimizer.zero_grad()  # 梯度归0
 
