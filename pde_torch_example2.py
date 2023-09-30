@@ -169,7 +169,7 @@ for epoch in range(iterations):
 test_M=100
 test_N=100
 x0 = np.linspace(0, 1, test_M)
-t0 = np.linspace(0, 1, test_N)
+t0 = np.linspace(0.0000001, 1, test_N)
 #u_real=t**3*(1-x)*np.sin(x)
 
 ms_t, ms_x = np.meshgrid(t0, x0)
