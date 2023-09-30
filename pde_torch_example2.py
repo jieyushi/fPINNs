@@ -42,6 +42,7 @@ class Net(nn.Module):
         #out = torch.tanh(self.hidden_layer8(out))
 
         out = torch.mul(self.input_layer(x),torch.tanh(self.input_layer(x)))
+        out = torch.mul(self.hidden_layer1(out), torch.tanh(self.hidden_layer1(out)))
         out = torch.mul(self.hidden_layer2(out),torch.tanh(self.hidden_layer2(out)))
         out = torch.mul(self.hidden_layer3(out),torch.tanh(self.hidden_layer3(out)))
         out = torch.mul(self.hidden_layer4(out),torch.tanh(self.hidden_layer4(out)))
@@ -50,7 +51,8 @@ class Net(nn.Module):
         out = torch.mul(self.hidden_layer7(out), torch.tanh(self.hidden_layer7(out)))
         out = torch.mul(self.hidden_layer8(out), torch.tanh(self.hidden_layer8(out)))
         out_NN = self.output_layer(out)
-        xs=torch.mul(x[:, 0]**alpha,torch.sin(np.pi*x[:, 1]))
+        xs=torch.mul(x[:, 0],torch.sin(np.pi*x[:, 1]))
+        # xs=torch.mul(x[:, 0]**alpha,torch.mul(x[:, 1],1-x[:, 1]))
         out_final = torch.mul(xs,out_NN[:,0])
         size_out=out_final.shape[0]
         out_final=out_final.reshape(size_out,1)
@@ -63,9 +65,9 @@ def aaa(l,alpha):
 def fpde(x, net , M , N, tau):
 
     u = net(x)  # 网络得到的数据
-
     u_matrix = u.reshape(M+1, N+1)
     u_matrix = u_matrix.detach().numpy()
+    # u_matrix = u_matrix**alpha
     D_t=np.zeros(((M+1,N+1)))
 
     for n in range(1,N+1):
@@ -91,10 +93,10 @@ def fpde(x, net , M , N, tau):
     return D_t - u_xx - uuu # 公式（1）
 
 
-net = Net(30)
+net = Net(20)
 mse_cost_function1 = torch.nn.MSELoss(reduction='mean')  # Mean squared error
 mse_cost_function2 = torch.nn.MSELoss(reduction='sum')  # Mean squared error
-optimizer = torch.optim.Adam(net.parameters(), lr=1e-3)
+optimizer = torch.optim.Adam(net.parameters(), lr=2e-4)
 
 #optimizer = torch.optim.SGD(net.parameters(), lr=0.001 )
 #scheduler = torch.optim.lr_scheduler.LambdaLR(optimizer, lr_lambda=lambda1) # 选定调整方法
@@ -103,11 +105,11 @@ optimizer = torch.optim.Adam(net.parameters(), lr=1e-3)
 
 # 初始化 常量
 
-M=20
-N=20
-alpha=0.6
+M=30
+N=30
+alpha=0.3
 
-t = np.linspace(0.00001, 1, N+1)
+t = np.linspace(0.000000001, 1, N+1)
 x = np.linspace(0, 1, M+1)
 tau=t[2]-t[1]
 ms_t, ms_x = np.meshgrid(t, x)
@@ -119,17 +121,18 @@ pt_t_collocation1 = Variable(torch.from_numpy(t).float(), requires_grad=True)
 f = np.zeros((x.shape[0], 1))
 Exact1 = np.zeros((x.shape[0], 1))
 for i in range(x.shape[0]):
-    f[i, 0] = np.sin(np.pi*x[i,0])*(gamma(1+alpha)+(np.pi**2)*(t[i,0]**alpha)-t[i,0]**alpha*(1-t[i,0]**np.sin(np.pi*x[i,0]))*(t[i,0]**alpha*np.sin(np.pi*x[i,0])-0.5))
-    Exact1[i, 0] = t[i, 0] ** alpha * np.sin(np.pi*x[i, 0])
+  Exact1[i, 0] = t[i, 0] ** alpha * np.sin(np.pi*x[i, 0])
+  f[i, 0] = np.sin(np.pi*x[i,0])*(gamma(1+alpha)+(np.pi**2)*(t[i,0]**alpha)-t[i,0]**alpha*(1-t[i,0]**alpha*np.sin(np.pi*x[i,0]))*(t[i,0]**alpha*np.sin(np.pi*x[i,0])-0.5))
+
 pt_f_collocation1 = Variable(torch.from_numpy(f).float(), requires_grad=True)
 pt_u_collocation1 = Variable(torch.from_numpy(Exact1).float(), requires_grad=True)
 
 
-iterations = 2000
+iterations = 20000
 for epoch in range(iterations):
     optimizer.zero_grad()  # 梯度归0
 
-    
+
     # 将变量x,t带入公式（1）
     f_out = fpde(torch.cat([pt_t_collocation1,pt_x_collocation1], 1), net, M,N,tau)  # output of f(x,t) 公式（1）
     mse_f_1 = mse_cost_function1(f_out, pt_f_collocation1)
@@ -168,7 +171,7 @@ for epoch in range(iterations):
 test_M=100
 test_N=100
 x0 = np.linspace(0, 1, test_M)
-t0 = np.linspace(0.000000001, 1, test_N)
+t0 = np.linspace(0.01, 1, test_N)
 #u_real=t**3*(1-x)*np.sin(x)
 
 ms_t, ms_x = np.meshgrid(t0, x0)
@@ -242,4 +245,3 @@ plt.rcParams['figure.dpi'] = 300  # 分辨率
 
 plt.savefig('eu_real_fpde0.1-1.png')
 plt.close(fig)
-
