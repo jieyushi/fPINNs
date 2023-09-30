@@ -71,7 +71,7 @@ def fpde(x, net , M , N, tau):
 net = Net(num_hidden_layers=8, input_size=2, hidden_size=30)
 mse_cost_function1 = torch.nn.MSELoss(reduction='mean')  # Mean squared error
 mse_cost_function2 = torch.nn.MSELoss(reduction='sum')  # Mean squared error
-optimizer = torch.optim.Adam(net.parameters(), lr=2e-4)
+optimizer = torch.optim.Adam(net.parameters(), lr=1e-4)
 # optimizer = torch.optim.SGD(net.parameters(), lr=0.0001)
 #optimizer = torch.optim.SGD(net.parameters(), lr=0.001 )
 #scheduler = torch.optim.lr_scheduler.LambdaLR(optimizer, lr_lambda=lambda1) # 选定调整方法
@@ -82,8 +82,8 @@ optimizer = torch.optim.Adam(net.parameters(), lr=2e-4)
 
 delta = 1
 r=0.9
-M=20
-N=40
+M=50
+N=50
 alpha=0.6
 
 boundnum=100
@@ -111,7 +111,7 @@ pt_f_collocation1 = Variable(torch.from_numpy(f).float(), requires_grad=True)
 pt_u_collocation1 = Variable(torch.from_numpy(Exact1).float(), requires_grad=True)
 
 
-iterations =10000
+iterations =20000
 err=0
 for epoch in range(iterations):
     optimizer.zero_grad()  # 梯度归0
