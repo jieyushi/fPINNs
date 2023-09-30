@@ -1,2 +1,1 @@
-# fPINNs
-fast fPINNs for TFH equation
+# A novel fPINNs for TFH equation
