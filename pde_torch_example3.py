@@ -1,4 +1,4 @@
-
+#huxley example3
 import torch
 import torch.nn as nn
 import torch
@@ -31,7 +31,8 @@ class Net(nn.Module):
         for hidden_layer in self.hidden_layers:
             out=hidden_layer(out)*self.active(hidden_layer(out))
         out_NN = self.output_layer(out)
-        xs=torch.mul(x[:, 0]**alpha,torch.sin(np.pi*x[:, 1]))
+        xs=torch.mul(x[:, 0],torch.sin(np.pi*x[:, 1]))
+        # xs = torch.mul(x[:, 0], torch.mul(x[:, 1],(1-x[:, 1])))
         out_final = torch.mul(xs,out_NN[:,0])
         size_out=out_final.shape[0]
         out_final=out_final.reshape(size_out,1)
@@ -73,17 +74,17 @@ def fpde(x, net , M , N, tau):
 
     #w = torch.tensor(0.01 / np.pi)
 
-    uuu=torch.mul(u,(1-u))
+    uuu=torch.mul(torch.mul(u,(1-u)),(u-0.75))
     size_uuu = uuu.shape[0]
     uuu=uuu.reshape(size_uuu,1)
     return D_t - u_xx - uuu # 公式（1）
 
 os.environ['CUDA_VISIBLE_DEVICES'] = '0'
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-net = Net(num_hidden_layers=6, input_size=2, hidden_size=30,activation=torch.tanh).to(device)
+net = Net(num_hidden_layers=8, input_size=2, hidden_size=20,activation=torch.tanh).to(device)
 mse_cost_function1 = torch.nn.MSELoss(reduction='mean')  # Mean squared error
 mse_cost_function2 = torch.nn.MSELoss(reduction='sum')  # Mean squared error
-optimizer = torch.optim.Adam(net.parameters(), lr=1e-3)
+optimizer = torch.optim.Adam(net.parameters(), lr=1e-4)
 
 
 
@@ -91,9 +92,9 @@ optimizer = torch.optim.Adam(net.parameters(), lr=1e-3)
 
 # 初始化 常量
 
-M=50
-N=50
-alpha=0.9
+M=30
+N=30
+alpha=0.6
 
 t = np.linspace(0.01, 0.99, N+1)
 x = np.linspace(0.01, 0.99, M+1)
@@ -107,7 +108,7 @@ Exact1 = t ** 2 *((x*(1-x))**1.5 )
 f1=2 / gamma(3 - alpha) * (x - x ** 2) ** 1.5 * ((t) ** (2 - alpha))
 f2=-(t ** 2) * (0.75 * (x - x ** 2) ** (-0.5) * (1 - 2 * x) ** 2 - 3 * (
                 x - x ** 2) ** 0.5)
-f3=-t**2 * ((x - x ** 2) ** 1.5) * (1 - t** 2 * ((x - x ** 2) ** 1.5)) 
+f3=-t**2 * ((x - x ** 2) ** 1.5) * (1 - t** 2 * ((x - x ** 2) ** 1.5)) *(t ** 2 *((x*(1-x))**1.5 )-0.75)
 f =f1+f2+f3
 
 
@@ -117,8 +118,8 @@ pt_u_collocation1 = Variable(torch.from_numpy(Exact1).float(), requires_grad=Tru
 
 collection_train_time = []
 collection_l2 = []
-iterations = 1000
-epoc=6
+iterations = 10000
+epoc=1
 randomlist=[]
 for i in range(epoc):
     for epoch in range(iterations):
@@ -154,7 +155,7 @@ for i in range(epoc):
                 print(epoch, "MSE", MSE.data)
                 print(epoch, "error max:", error_max)
                 print(epoch, "error_mean", error_mean)
-# torch.save(net, 'example3_1.pkl')
+    torch.save(net, 'example3_1.pkl')
     np.savetxt('time_fPINNs_50'+str(i+1)+'.txt', (collection_train_time))
     np.savetxt('l2_fPINNs2_50'+str(i+1)+'.txt', (collection_l2))
 
