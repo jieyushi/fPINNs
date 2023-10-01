@@ -14,9 +14,7 @@ from scipy.special import gamma
 
 # 模型搭建
 class Net(nn.Module):
-    def __init__(self, NN): # NL n个l（线性，全连接）隐藏层， NN 输入数据的维数， 128 256
-        # NL是有多少层隐藏层
-        # NN是每层的神经元数量
+    def __init__(self, NN):
         super(Net, self).__init__()
 
         self.input_layer = nn.Linear(2, NN)
