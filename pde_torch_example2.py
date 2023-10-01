@@ -14,12 +14,14 @@ from scipy.special import gamma
 
 # 模型搭建
 class Net(nn.Module):
-    def __init__(self, NN): 
+    def __init__(self, NN): # NL n个l（线性，全连接）隐藏层， NN 输入数据的维数， 128 256
+        # NL是有多少层隐藏层
+        # NN是每层的神经元数量
         super(Net, self).__init__()
 
         self.input_layer = nn.Linear(2, NN)
-        self.hidden_layer1 = nn.Linear(NN,int(NN)) 
-        self.hidden_layer2 = nn.Linear(int(NN), int(NN))  
+        self.hidden_layer1 = nn.Linear(NN,int(NN)) ## 原文这里用NN，我这里用的下采样，经过实验验证，“等采样”更优
+        self.hidden_layer2 = nn.Linear(int(NN), int(NN))  ## 原文这里用NN，我这里用的下采样，经过实验验证，“等采样”更优
         self.hidden_layer3 = nn.Linear(int(NN), int(NN))
         self.hidden_layer4 = nn.Linear(int(NN), int(NN))
         self.hidden_layer5 = nn.Linear(int(NN), int(NN))
@@ -49,8 +51,8 @@ class Net(nn.Module):
         out = torch.mul(self.hidden_layer7(out), torch.tanh(self.hidden_layer7(out)))
         out = torch.mul(self.hidden_layer8(out), torch.tanh(self.hidden_layer8(out)))
         out_NN = self.output_layer(out)
-        xs=torch.mul(x[:, 0]**alpha,torch.sin(np.pi*x[:, 1]))
-        # xs=torch.mul(x[:, 0]**alpha,torch.mul(x[:, 1],1-x[:, 1]))
+        # xs=torch.mul(x[:, 0],torch.sin(np.pi*x[:, 1]))
+        xs=torch.mul(x[:, 0]**alpha,torch.mul(x[:, 1],1-x[:, 1]))
         out_final = torch.mul(xs,out_NN[:,0])
         size_out=out_final.shape[0]
         out_final=out_final.reshape(size_out,1)
@@ -94,7 +96,7 @@ def fpde(x, net , M , N, tau):
 net = Net(20)
 mse_cost_function1 = torch.nn.MSELoss(reduction='mean')  # Mean squared error
 mse_cost_function2 = torch.nn.MSELoss(reduction='sum')  # Mean squared error
-optimizer = torch.optim.Adam(net.parameters(), lr=2e-4)
+optimizer = torch.optim.Adam(net.parameters(), lr=1e-4)
 
 #optimizer = torch.optim.SGD(net.parameters(), lr=0.001 )
 #scheduler = torch.optim.lr_scheduler.LambdaLR(optimizer, lr_lambda=lambda1) # 选定调整方法
@@ -105,9 +107,9 @@ optimizer = torch.optim.Adam(net.parameters(), lr=2e-4)
 
 M=30
 N=30
-alpha=0.3
+alpha=0.9
 
-t = np.linspace(0.000000001, 1, N+1)
+t = np.linspace(0.0001, 1, N+1)
 x = np.linspace(0, 1, M+1)
 tau=t[2]-t[1]
 ms_t, ms_x = np.meshgrid(t, x)
@@ -126,7 +128,7 @@ pt_f_collocation1 = Variable(torch.from_numpy(f).float(), requires_grad=True)
 pt_u_collocation1 = Variable(torch.from_numpy(Exact1).float(), requires_grad=True)
 
 
-iterations = 10000
+iterations = 20000
 for epoch in range(iterations):
     optimizer.zero_grad()  # 梯度归0
 
