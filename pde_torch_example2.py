@@ -18,8 +18,8 @@ class Net(nn.Module):
         super(Net, self).__init__()
 
         self.input_layer = nn.Linear(2, NN)
-        self.hidden_layer1 = nn.Linear(NN,int(NN)) ## 原文这里用NN，我这里用的下采样，经过实验验证，“等采样”更优
-        self.hidden_layer2 = nn.Linear(int(NN), int(NN))  ## 原文这里用NN，我这里用的下采样，经过实验验证，“等采样”更优
+        self.hidden_layer1 = nn.Linear(NN,int(NN)) 
+        self.hidden_layer2 = nn.Linear(int(NN), int(NN))  
         self.hidden_layer3 = nn.Linear(int(NN), int(NN))
         self.hidden_layer4 = nn.Linear(int(NN), int(NN))
         self.hidden_layer5 = nn.Linear(int(NN), int(NN))
