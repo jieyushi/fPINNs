@@ -118,11 +118,11 @@ pt_t_collocation1 = Variable(torch.from_numpy(t).float(), requires_grad=True)
 # u_exact =  torch.mul(torch.mul(torch.mul(pt_t_collocation,torch.mul(pt_t_collocation,pt_t_collocation)),(1-pt_x_collocation)),torch.sin(pt_x_collocation))
 f = np.zeros((x.shape[0], 1))
 Exact1 = np.zeros((x.shape[0], 1))
-f_value = np.sin(np.pi * x) * (gamma(1 + alpha) + (np.pi ** 2) * (t ** alpha) - t ** alpha * (1 - t ** np.sin(np.pi * x)) * (t ** alpha * np.sin(np.pi * x) - 0.5))
+f_value = np.sin(np.pi * x) * (gamma(1 + alpha) + (np.pi ** 2) * (t ** alpha) - t ** alpha * (1 - t **** alpha* np.sin(np.pi * x)) * (t ** alpha * np.sin(np.pi * x) - 0.5))
 r=0.1
 sigma_f = r * f_value
 noise = np.random.normal(0, sigma_f)
-f = np.sin(np.pi*x)*(gamma(1+alpha)+(np.pi**2)*(t**alpha)-t**alpha*(1-t**np.sin(np.pi*x))*(t**alpha*np.sin(np.pi*x)-0.5))+noise
+f = np.sin(np.pi*x)*(gamma(1+alpha)+(np.pi**2)*(t**alpha)-t**alpha*(1-t**** alpha*np.sin(np.pi*x))*(t**alpha*np.sin(np.pi*x)-0.5))+noise
 Exact1 = t ** alpha * np.sin(np.pi*x)
 pt_f_collocation1 = Variable(torch.from_numpy(f).float(), requires_grad=True)
 pt_u_collocation1 = Variable(torch.from_numpy(Exact1).float(), requires_grad=True)
