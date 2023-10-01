@@ -74,8 +74,6 @@ mse_cost_function1 = torch.nn.MSELoss(reduction='mean')  # Mean squared error
 mse_cost_function2 = torch.nn.MSELoss(reduction='sum')  # Mean squared error
 optimizer = torch.optim.Adam(net.parameters(), lr=1e-4)
 
-#optimizer = torch.optim.SGD(net.parameters(), lr=0.001 )
-#scheduler = torch.optim.lr_scheduler.LambdaLR(optimizer, lr_lambda=lambda1) # 选定调整方法
 
 
 
@@ -115,39 +113,6 @@ collection_loss=[]
 iterations = 3000
 for epoch in range(iterations):
     optimizer.zero_grad()  # 梯度归0
-
-    # 求边界条件的误差
-    # 初始化变量
-    #t_in_var = np.random.uniform(low=0, high=1.0, size=(nbound, 1))
-    #x_bc_var = np.random.uniform(low=0, high=1.0, size=(nbound, 1))
-    #u_bc_zero = np.zeros((nbound, 1))
-
-    # 将数据转化为torch可用的
-    #pt_x_bc_var = Variable(torch.from_numpy(x_bc_var).float(), requires_grad=False)
-    #pt_t_bc_zeros = Variable(torch.from_numpy(t_bc_zeros).float(), requires_grad=False)
-    #pt_u_bc_zeros = Variable(torch.from_numpy(u_bc_zero).float(), requires_grad=False)
-    #pt_x_in_pos_one = Variable(torch.from_numpy(x_in_pos_one).float(), requires_grad=False)
-    #pt_x_in_neg_one = Variable(torch.from_numpy(x_in_neg_one).float(), requires_grad=False)
-    #pt_t_in_var = Variable(torch.from_numpy(t_in_var).float(), requires_grad=False)
-    #pt_u_in_zeros = Variable(torch.from_numpy(u_in_zeros).float(), requires_grad=False)
-
-    # 求边界条件的损失
-    #net_bc_out = net(torch.cat([pt_t_bc_zeros,pt_x_bc_var], 1))  # u(x,t)的输出
-    #mse_u_2 = mse_cost_function(net_bc_out, pt_u_bc_zeros)  # e = u(x,t)-(-sin(pi*x))  公式（2）
-
-    #net_bc_inr = net(torch.cat([ pt_t_in_var,pt_x_in_pos_one], 1))  # 0=u(t,1) 公式（3)
-    #net_bc_inl = net(torch.cat([ pt_t_in_var,pt_x_in_neg_one], 1))  # 0=u(t,0) 公式（4）
-
-    #mse_u_3 = mse_cost_function(net_bc_inr, pt_u_in_zeros)  # e = 0-u(t,1) 公式(3)
-    #mse_u_4 = mse_cost_function(net_bc_inl, pt_u_in_zeros)  # e = 0-u(t,-1) 公式（4）
-
-    # 求PDE函数式的误差
-    # 初始化变量
-    #x_collocation = np.random.uniform(low=-1.0, high=1.0, size=(2000, 1))
-    #t_collocation = np.random.uniform(low=0.0, high=1.0, size=(2000, 1))
-
-    
-    # 将变量x,t带入公式（1）
     f_out = fpde(torch.cat([pt_t_collocation1,pt_x_collocation1], 1), net, M,N,tau)  # output of f(x,t) 公式（1）
     mse_f_1 = mse_cost_function1(f_out, pt_f_collocation1)
     net_u_in = net(torch.cat([pt_t_collocation1, pt_x_collocation1], 1))
