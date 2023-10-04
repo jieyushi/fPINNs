@@ -86,7 +86,7 @@ def fpde(x, net, M1, M2, N, tau):
 net = Net(30)
 mse_cost_function1 = torch.nn.MSELoss(reduction='mean')  # Mean squared error
 mse_cost_function2 = torch.nn.MSELoss(reduction='sum')  # Mean squared error
-optimizer = torch.optim.Adam(net.parameters(), lr=1e-4)
+optimizer = torch.optim.Adam(net.parameters(), lr=1e-3)
 
 # optimizer = torch.optim.SGD(net.parameters(), lr=0.001 )
 # scheduler = torch.optim.lr_scheduler.LambdaLR(optimizer, lr_lambda=lambda1) # 选定调整方法
