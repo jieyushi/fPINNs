@@ -1,4 +1,5 @@
-# soft constrain
+# soft-hard constrains
+#IC≠0，BC==0
 import torch
 import torch.nn as nn
 import torch
@@ -22,7 +23,7 @@ class Net(nn.Module):
         super(Net, self).__init__()
 
         self.input_layer = nn.Linear(3, NN)
-        self.hidden_layers = nn.ModuleList([nn.Linear(NN, NN) for _ in range(7)])  # Create a list of hidden layers
+        self.hidden_layers = nn.ModuleList([nn.Linear(NN, NN) for _ in range(4)])  # Create a list of hidden layers
         self.output_layer = nn.Linear(NN, 1)
 
     def forward(self, x):
@@ -34,10 +35,10 @@ class Net(nn.Module):
         out_NN = self.output_layer(out)
         # xs = torch.mul(torch.mul(x[:, 0], torch.sin(np.pi * x[:, 1])), torch.sin(np.pi * x[:, 2]))
         # xs = torch.mul(torch.sin(np.pi * x[:, 1]), torch.sin(np.pi * x[:, 2]))
-
-        # out_final = torch.mul(xs, out_NN[:, 0])
-        # out_final = out_final.view(out_final.size(0), 1)  # Reshape the output tensor
-        return out_NN
+        xs = torch.mul(torch.mul(x[:, 1],x[:, 2]),torch.mul(1-x[:, 1], 1-x[:, 2]))
+        out_final = torch.mul(xs, out_NN[:, 0])
+        out_final = out_final.view(out_final.size(0), 1)  # Reshape the output tensor
+        return out_final
 
 
 def aaa(l, alpha):
@@ -48,21 +49,21 @@ def aaa(l, alpha):
 def fpde(x, net, M1, M2, N, tau):
     u = net(x)  # 网络得到的数据
 
-    u_matrix = u.reshape(M1 + 1, M2 + 1, N + 1)
+    u_matrix = u.reshape(M1 + 1, N + 1, M2 + 1)
     u_matrix = u_matrix.detach().numpy()
-    D_t = np.zeros(((M1 + 1, M2 + 1, N + 1)))
+    D_t = np.zeros(((M1 + 1,  N + 1, M2 + 1)))
 
     for n in range(1, N + 1):
         for i1 in range(1, M1):
             for i2 in range(1, M2):
-                D_t[i1, i2, n] = D_t[i1, i2, n] + aaa(0, alpha) * tau ** (-alpha) / gamma(2 - alpha) * u_matrix[i1][i2][
-                    n]
+                D_t[i1, n, i2] = D_t[i1, n, i2] + aaa(0, alpha) * tau ** (-alpha) / gamma(2 - alpha) * u_matrix[i1][n][
+                    i2]
                 for k in range(1, n):
-                    D_t[i1, i2, n] = D_t[i1, i2, n] - (
+                    D_t[i1, n, i2] = D_t[i1, n, i2] - (
                                 (aaa(n - k - 1, alpha) - aaa(n - k, alpha)) * tau ** (-alpha) / gamma(2 - alpha) *
-                                u_matrix[i1][i2][k])
-                D_t[i1, i2, n] = D_t[i1, i2, n] - aaa(n - 1, alpha) * tau ** (-alpha) / gamma(2 - alpha) * \
-                                 u_matrix[i1][i2][0]
+                                u_matrix[i1][k][i2])
+                D_t[i1, n, i2] = D_t[i1, n, i2] - aaa(n - 1, alpha) * tau ** (-alpha) / gamma(2 - alpha) * \
+                                 u_matrix[i1][0][i2]
     D_t = D_t.flatten()[:, None]
     D_t = Variable(torch.from_numpy(D_t).float(), requires_grad=False)
     u_tx = torch.autograd.grad(u, x, grad_outputs=torch.ones_like(net(x)),
@@ -85,7 +86,7 @@ def fpde(x, net, M1, M2, N, tau):
 net = Net(30)
 mse_cost_function1 = torch.nn.MSELoss(reduction='mean')  # Mean squared error
 mse_cost_function2 = torch.nn.MSELoss(reduction='sum')  # Mean squared error
-optimizer = torch.optim.Adam(net.parameters(), lr=2e-3)
+optimizer = torch.optim.Adam(net.parameters(), lr=1e-4)
 
 # optimizer = torch.optim.SGD(net.parameters(), lr=0.001 )
 # scheduler = torch.optim.lr_scheduler.LambdaLR(optimizer, lr_lambda=lambda1) # 选定调整方法
@@ -95,9 +96,8 @@ optimizer = torch.optim.Adam(net.parameters(), lr=2e-3)
 N = 20
 M1 = 10
 M2 = 10
-alpha = 0.6
+alpha = 0.3
 
-iterations = 20000
 
 t = np.linspace(0, 1, N + 1)
 x1 = np.linspace(0, 1, M1 + 1)
@@ -112,12 +112,8 @@ pt_x1_collocation1 = Variable(torch.from_numpy(x1).float(), requires_grad=True)
 pt_x2_collocation1 = Variable(torch.from_numpy(x2).float(), requires_grad=True)
 pt_t_collocation1 = Variable(torch.from_numpy(t).float(), requires_grad=True)
 
-boundnum=100
 
-t_bc_zeros = np.zeros((boundnum, 1))
-t_bc_ones = np.ones((boundnum, 1))
-x_zero = np.zeros((boundnum, 1))
-x_one = np.ones((boundnum, 1))
+# u_exact =  torch.mul(torch.mul(torch.mul(pt_t_collocation,torch.mul(pt_t_collocation,pt_t_collocation)),(1-pt_x_collocation)),torch.sin(pt_x_collocation))
 
 Exact1 = (1 + t ** 3) * (1 - x1) * np.sin(x1) * (1 - x2) * np.sin(x2)
 f1 = 6 * t ** (3 - alpha) / gamma(4 - alpha) * (1 - x1) * np.sin(x1) * (1 - x2) * np.sin(x2)
@@ -126,61 +122,42 @@ f3 = 2 * (1 + t ** 3) * (np.cos(x1) * (1 - x2) * np.sin(x2) + (1 - x1) * np.sin(
 f4 = -Exact1 * (1 - Exact1) * (Exact1 - 1)
 f = f1 + f2 + f3 + f4
 
+
+
+
+pt_f_collocation1 = Variable(torch.from_numpy(f).float(), requires_grad=True)
+pt_u_collocation1 = Variable(torch.from_numpy(Exact1).float(), requires_grad=True)
+
 collection_l2 = []
 collection_error_mean = []
 collection_error_max = []
 collection_l2 = []
 collection_loss = []
-
+boundnum = 20
+iterations = 5000
 for epoch in range(iterations):
+
     x1_bc_var = np.random.uniform(low=0, high=1, size=(boundnum, 1))
     x2_bc_var = np.random.uniform(low=0, high=1, size=(boundnum, 1))
-    t0_ic_var = np.random.uniform(low=0, high=1, size=(boundnum, 1))
-
-
-    pt_t_zero = Variable(torch.from_numpy(t_bc_zeros).float(), requires_grad=False)
-    pt_t_one = Variable(torch.from_numpy(t_bc_ones).float(), requires_grad=False)
-    pt_x_zero= Variable(torch.from_numpy(x_zero).float(), requires_grad=False)
-    pt_x_one = Variable(torch.from_numpy(x_one).float(), requires_grad=False)
-
+    t1 = np.ones_like(x1_bc_var)
+    t0 = np.zeros_like(x1_bc_var)
     pt_x1bc_collocation1 = Variable(torch.from_numpy(x1_bc_var).float(), requires_grad=True)
     pt_x2bc_collocation1 = Variable(torch.from_numpy(x2_bc_var).float(), requires_grad=True)
-    pt_t0ic_collocation1 = Variable(torch.from_numpy(t0_ic_var).float(), requires_grad=True)
-
-    # u_exact =  torch.mul(torch.mul(torch.mul(pt_t_collocation,torch.mul(pt_t_collocation,pt_t_collocation)),(1-pt_x_collocation)),torch.sin(pt_x_collocation))
-
-
-
+    pt_t1_collocation1 = Variable(torch.from_numpy(t1).float(), requires_grad=True)
+    pt_t0_collocation1 = Variable(torch.from_numpy(t0).float(), requires_grad=True)
     Exactt0 = (1 - x1_bc_var) * np.sin(x1_bc_var) * (1 - x2_bc_var) * np.sin(x2_bc_var)
-    Exactt1 = 2 *(1 - x1_bc_var) * np.sin(x1_bc_var) * (1 - x2_bc_var) * np.sin(x2_bc_var)
-    Exactbc_zero = t0_ic_var*0
-
-
-
-
-    pt_f_collocation1 = Variable(torch.from_numpy(f).float(), requires_grad=True)
-    pt_u_collocation1 = Variable(torch.from_numpy(Exact1).float(), requires_grad=True)
+    Exactt1 = 2 * (1 - x1_bc_var) * np.sin(x1_bc_var) * (1 - x2_bc_var) * np.sin(x2_bc_var)
     pt_u_collocationt1 = Variable(torch.from_numpy(Exactt1).float(), requires_grad=True)
     pt_u_collocationt0 = Variable(torch.from_numpy(Exactt0).float(), requires_grad=True)
-    pt_u_collocation_bczero = Variable(torch.from_numpy(Exactbc_zero).float(), requires_grad=True)
-
     optimizer.zero_grad()  # 梯度归0
     f_out = fpde(torch.cat([pt_t_collocation1, pt_x1_collocation1, pt_x2_collocation1], 1), net, M1, M2, N,
                  tau)  # output of f(x,t) 公式（1）
     mse_f_1 = mse_cost_function1(f_out, pt_f_collocation1)
-    net_u_t0 = net(torch.cat([pt_t_zero, pt_x1bc_collocation1, pt_x2bc_collocation1], 1))
-    net_u_t1 = net(torch.cat([pt_t_one, pt_x1bc_collocation1, pt_x2bc_collocation1], 1))
-    net_u_x10 = net(torch.cat([pt_t0ic_collocation1, pt_x_zero, pt_x2bc_collocation1], 1))
-    net_u_x11 = net(torch.cat([pt_t0ic_collocation1, pt_x_one, pt_x2bc_collocation1], 1))
-    net_u_x20 = net(torch.cat([pt_t0ic_collocation1, pt_x1bc_collocation1, pt_x_zero], 1))
-    net_u_x21 = net(torch.cat([pt_t0ic_collocation1, pt_x1bc_collocation1, pt_x_one], 1))
+    net_u_t1 = net(torch.cat([pt_t1_collocation1, pt_x1bc_collocation1, pt_x2bc_collocation1], 1))
+    net_u_t0 = net(torch.cat([pt_t0_collocation1, pt_x1bc_collocation1, pt_x2bc_collocation1], 1))
     net_u_in = net(torch.cat([pt_t_collocation1, pt_x1_collocation1, pt_x2_collocation1], 1))
     mse_u_t1 = mse_cost_function1(net_u_t1, pt_u_collocationt1)
     mse_u_t0 = mse_cost_function1(net_u_t0, pt_u_collocationt0)
-    mse_u_x10 = mse_cost_function1(net_u_x10, pt_u_collocation_bczero)
-    mse_u_x11 = mse_cost_function1(net_u_x11, pt_u_collocation_bczero)
-    mse_u_x20 = mse_cost_function1(net_u_x20, pt_u_collocation_bczero)
-    mse_u_x21 = mse_cost_function1(net_u_x21, pt_u_collocation_bczero)
     errort1 = net_u_in - pt_u_collocation1
     mse_u_1 = mse_cost_function1(net_u_in, pt_u_collocation1)
     error = net_u_in - pt_u_collocation1
@@ -193,21 +170,13 @@ for epoch in range(iterations):
     collection_error_max = np.append(collection_error_max, error_max)
 
     # 将误差(损失)累加起来
-    # minmse=np.min([mse_f_1.data,mse_u_t0.data,mse_u_t1.data,mse_u_x10.data,mse_u_x11.data,mse_u_x20.data,mse_u_x21.data])
-    minmse=np.min([mse_f_1.data,mse_u_t0.data,mse_u_x10.data,mse_u_x11.data,mse_u_x20.data,mse_u_x21.data])
+
+    minmse=np.min([mse_f_1.data,mse_u_t0.data])
+    # minmse=1
     w1=mse_f_1/minmse
     w2 = mse_u_t0 / minmse
     w3 = mse_u_t1 / minmse
-    w4 = mse_u_x10 / minmse
-    w5 = mse_u_x11 / minmse
-    w6 = mse_u_x20 / minmse
-    w7 = mse_u_x21 / minmse
-    # 将误差(损失)累加起来
-    # loss = w1*mse_f_1+(w2*mse_u_t0+w3*mse_u_t1+w4*mse_u_x10+w5*mse_u_x11+w6*mse_u_x20+w7*mse_u_x21)
-    loss = w1*mse_f_1+(w2*mse_u_t0+w4*mse_u_x10+w5*mse_u_x11+w6*mse_u_x20+w7*mse_u_x21)
-
-
-    # loss = mse_f_1+mse_u_t0+mse_u_x10+mse_u_x11+mse_u_x20+mse_u_x21
+    loss = mse_f_1+mse_u_t0#+mse_u_t1##w1*mse_f_1+w2*mse_u_t0+w3*mse_u_t1#
     MSE = mse_u_1
     collection_loss = np.append(collection_loss, loss.data)
     # u_error_max = mse_u_1111
@@ -218,7 +187,7 @@ for epoch in range(iterations):
     optimizer.step()  # This is equivalent to : theta_new = theta_old - alpha * derivative of J w.r.t theta
 
     with torch.autograd.no_grad():
-        if epoch % 100 == 0:
+        if epoch % 99 == 0:
             print(epoch, "Traning Loss:", loss.data)
             print(epoch, "L2", error_L2)
             print(epoch, "MSE", MSE.data)
@@ -283,9 +252,9 @@ np.savetxt('2D_error.txt', (error))
 np.savetxt('2D_unn.txt', (unn_numpy))
 np.savetxt('2D_ureal.txt', (u_real_numpy))
 
-u_real_t0 = u_real_matrix[:, :, 10]
-unn_t0 = unn_matrix[:, :, 10]
-error_t0 = error_matrix[:, :, 10]
+u_real_t0 = u_real_matrix[:, 10, :]
+unn_t0 = unn_matrix[:, 10, :]
+error_t0 = error_matrix[:, 10, :]
 
 fig = plt.figure()
 ax = fig.add_subplot(projection='3d')
@@ -323,9 +292,9 @@ plt.rcParams['figure.dpi'] = 500  # 分辨率
 plt.savefig('u_real_fpde_2d_t01.png')
 plt.close(fig)
 
-u_real_t0 = u_real_matrix[:, :, 50]
-unn_t0 = unn_matrix[:, :, 50]
-error_t0 = error_matrix[:, :, 50]
+u_real_t0 = u_real_matrix[:, 50, :]
+unn_t0 = unn_matrix[:, 50, :]
+error_t0 = error_matrix[:, 50, :]
 
 fig = plt.figure()
 ax = fig.add_subplot(projection='3d')
@@ -363,9 +332,9 @@ plt.rcParams['figure.dpi'] = 500  # 分辨率
 plt.savefig('u_real_fpde_2d_t05.png')
 plt.close(fig)
 
-u_real_t0 = u_real_matrix[:, :, 90]
-unn_t0 = unn_matrix[:, :, 90]
-error_t0 = error_matrix[:, :, 90]
+u_real_t0 = u_real_matrix[:, 100, :]
+unn_t0 = unn_matrix[:, 100, :]
+error_t0 = error_matrix[:, 100, :]
 
 fig = plt.figure()
 ax = fig.add_subplot(projection='3d')
