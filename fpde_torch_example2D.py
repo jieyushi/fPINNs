@@ -96,7 +96,7 @@ optimizer = torch.optim.Adam(net.parameters(), lr=1e-4)
 N = 20
 M1 = 10
 M2 = 10
-alpha = 0.3
+alpha = 0.6
 
 
 t = np.linspace(0, 1, N + 1)
@@ -176,7 +176,7 @@ for epoch in range(iterations):
     w1=mse_f_1/minmse
     w2 = mse_u_t0 / minmse
     w3 = mse_u_t1 / minmse
-    loss = mse_f_1+mse_u_t0#+mse_u_t1##w1*mse_f_1+w2*mse_u_t0+w3*mse_u_t1#
+    loss = w1*mse_f_1+w2*mse_u_t0#+mse_u_t1##w1*mse_f_1+w2*mse_u_t0+w3*mse_u_t1#
     MSE = mse_u_1
     collection_loss = np.append(collection_loss, loss.data)
     # u_error_max = mse_u_1111
