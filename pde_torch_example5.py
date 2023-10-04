@@ -67,10 +67,10 @@ def fpde(x, net , M , N, tau):
     return D_t - u_xx - uuu # 公式（1）
 
 
-net = Net(num_hidden_layers=6, input_size=2, hidden_size=20)
+net = Net(num_hidden_layers=8, input_size=2, hidden_size=30)
 mse_cost_function1 = torch.nn.MSELoss(reduction='mean')  # Mean squared error
 mse_cost_function2 = torch.nn.MSELoss(reduction='sum')  # Mean squared error
-optimizer = torch.optim.Adam(net.parameters(), lr=1e-3)
+optimizer = torch.optim.Adam(net.parameters(), lr=5e-4)
 
 #optimizer = torch.optim.SGD(net.parameters(), lr=0.001 )
 #scheduler = torch.optim.lr_scheduler.LambdaLR(optimizer, lr_lambda=lambda1) # 选定调整方法
@@ -114,7 +114,7 @@ pt_f_collocation1 = Variable(torch.from_numpy(f).float(), requires_grad=True)
 pt_u_collocation1 = Variable(torch.from_numpy(Exact1).float(), requires_grad=True)
 
 
-iterations = 10000
+iterations = 5000
 err=0
 for epoch in range(iterations):
     optimizer.zero_grad()  # 梯度归0
@@ -194,7 +194,7 @@ for epoch in range(iterations):
             print(epoch, "MSE", MSE.data)
             print(epoch, "error max:", error_max)
             print(epoch, "error_mean", error_mean)
-            if (error_L2 - err)<0.05 or err == 0 or epoch<2000:
+            if (error_L2 - err)<0.005 or err == 0 or epoch<2000:
                 err = error_L2
             else:
                 break
