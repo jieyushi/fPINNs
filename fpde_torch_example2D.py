@@ -96,7 +96,7 @@ optimizer = torch.optim.Adam(net.parameters(), lr=1e-3)
 N = 20
 M1 = 10
 M2 = 10
-alpha = 0.6
+alpha = 0.3
 
 
 t = np.linspace(0, 1, N + 1)
@@ -134,7 +134,7 @@ collection_error_max = []
 collection_l2 = []
 collection_loss = []
 boundnum = 20
-iterations = 5000
+iterations = 10000
 for epoch in range(iterations):
 
     x1_bc_var = np.random.uniform(low=0, high=1, size=(boundnum, 1))
